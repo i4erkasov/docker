@@ -1,0 +1,48 @@
+version: "3"
+services:
+  backend:
+    build:
+      context: .
+      args:
+        - XDEBUG=true
+    volumes:
+      - ./:/var/www
+    links:
+      - db
+    depends_on:
+      - composer
+      - db
+    environment:
+      - CHMOD=true
+      - DB_HOST=db
+      - DB_ROOTPASS=rootpass
+  nginx:
+    build: ./docker/nginx
+    volumes:
+      - ./web/:/var/www/web
+    ports:
+      - 8081:80
+    expose:
+      - 9000
+    links:
+      - backend
+    depends_on:
+      - backend
+    environment:
+      - FPM_UPSTREAM=backend:9000
+  composer:
+    image: composer
+    command:  install --ignore-platform-reqs --no-scripts --no-progress
+    volumes:
+      - ./:/app
+  db:
+    image: mysql:5.7
+    ports:
+      - 3336:3306
+    environment:
+      MYSQL_DATABASE: losmetias
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_USER: local
+      MYSQL_PASSWORD: localpass
+    volumes:
+      - ./database:/var/lib/mysql

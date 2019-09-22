@@ -1,0 +1,32 @@
+server {
+    set $project_root /var/www;
+    listen        80;
+    server_name   _;
+    access_log    /dev/stdout main;
+    error_log     /dev/stderr;
+    root $project_root/web;
+
+    charset utf-8;
+    client_max_body_size 300m;
+
+    location / {
+          try_files $uri uri/ /index.php$is_args$args;
+    }
+
+    # deny accessing php files for the /assets directory
+    location ~ ^/assets/.*\.php$ {
+      deny all;
+    }
+
+    location ~* \.php$ {
+      include fastcgi_params;
+      fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+      fastcgi_pass ${FPM_UPSTREAM};
+
+      try_files  $uri /web/$uri =404;
+    }
+
+    location ~* /\. {
+      deny all;
+    }
+}
